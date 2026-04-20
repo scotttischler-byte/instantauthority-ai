@@ -2,7 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BarChart3, FileText, Globe2, Search, ShieldCheck, X, Zap } from "lucide-react";
+import {
+  BarChart3,
+  CalendarDays,
+  CheckCircle2,
+  FileText,
+  Globe2,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  X,
+  Zap,
+} from "lucide-react";
 
 type FeatureKey =
   | "Authority Engine"
@@ -70,6 +81,22 @@ export default function Home() {
   const [analyzerUrl, setAnalyzerUrl] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [leadOpen, setLeadOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [leadSent, setLeadSent] = useState(false);
+  const [demoSent, setDemoSent] = useState(false);
+  const [leadForm, setLeadForm] = useState({
+    name: "",
+    email: "",
+    company: "",
+    goal: "",
+  });
+  const [demoForm, setDemoForm] = useState({
+    name: "",
+    email: "",
+    company: "",
+    timing: "",
+  });
 
   async function runFakeAnalysis() {
     if (!analyzerUrl.trim()) return;
@@ -94,6 +121,23 @@ export default function Home() {
     setAnalyzing(false);
   }
 
+  function closeFeatureModal() {
+    setActiveFeature(null);
+    setAnalyzerUrl("");
+    setAnalysis(null);
+    setAnalyzing(false);
+  }
+
+  function submitLead(e: React.FormEvent) {
+    e.preventDefault();
+    setLeadSent(true);
+  }
+
+  function submitDemo(e: React.FormEvent) {
+    e.preventDefault();
+    setDemoSent(true);
+  }
+
   return (
     <div className="bg-surface text-charcoal">
       <header className="sticky top-0 z-40 border-b border-charcoal/10 bg-white/95 backdrop-blur">
@@ -111,9 +155,16 @@ export default function Home() {
             <Link href="/sign-in" className="text-sm font-medium text-charcoal">
               Sign In
             </Link>
-            <Link href="/sign-up" className="rounded-lg bg-cyan px-4 py-2 text-sm font-semibold text-charcoal">
+            <button
+              type="button"
+              onClick={() => {
+                setLeadOpen(true);
+                setLeadSent(false);
+              }}
+              className="rounded-lg bg-cyan px-4 py-2 text-sm font-semibold text-charcoal"
+            >
               Start Free Trial
-            </Link>
+            </button>
           </div>
         </div>
       </header>
@@ -133,12 +184,26 @@ export default function Home() {
               make your brand the most trusted source in your industry — in 30 days.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/sign-up" className="rounded-lg bg-cyan px-6 py-3 font-semibold text-charcoal">
+              <button
+                type="button"
+                onClick={() => {
+                  setLeadOpen(true);
+                  setLeadSent(false);
+                }}
+                className="rounded-lg bg-cyan px-6 py-3 font-semibold text-charcoal"
+              >
                 Start Building Authority →
-              </Link>
-              <a href="#how" className="rounded-lg border border-charcoal/20 px-6 py-3 font-semibold text-charcoal">
-                Watch Demo
-              </a>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDemoOpen(true);
+                  setDemoSent(false);
+                }}
+                className="rounded-lg border border-charcoal/20 px-6 py-3 font-semibold text-charcoal"
+              >
+                Book a Demo
+              </button>
             </div>
           </div>
           <div className="relative rounded-2xl border border-charcoal/10 bg-white p-6 shadow-xl">
@@ -249,7 +314,13 @@ export default function Home() {
       <footer className="border-t border-charcoal/10 bg-white py-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 text-sm text-slate-600 sm:px-6">
           <p>InstantAuthority.ai — Build trust at scale.</p>
-          <div className="flex gap-4"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#faq">Blog</a><a href="#">Privacy</a><a href="#">Terms</a></div>
+          <div className="flex gap-4">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+            <a href="/sign-in">Sign In</a>
+            <a href="/sign-up">Get Started</a>
+          </div>
           <span className="rounded-full bg-cyan/20 px-2 py-1 text-xs font-semibold text-electric">Powered by Claude AI</span>
         </div>
       </footer>
@@ -258,15 +329,13 @@ export default function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/70 p-4">
           <div className="w-full max-w-2xl rounded-2xl border border-electric/20 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-electric/10 px-5 py-4">
-              <h3 className="font-display text-2xl text-charcoal">{activeFeature}</h3>
+              <h3 className="flex items-center gap-2 font-display text-2xl text-charcoal">
+                <Sparkles className="h-5 w-5 text-cyan" />
+                {activeFeature}
+              </h3>
               <button
                 type="button"
-                onClick={() => {
-                  setActiveFeature(null);
-                  setAnalyzerUrl("");
-                  setAnalysis(null);
-                  setAnalyzing(false);
-                }}
+                onClick={closeFeatureModal}
                 className="rounded-lg p-2 text-slate-500 transition hover:bg-surface hover:text-charcoal"
                 aria-label="Close modal"
               >
@@ -342,10 +411,76 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <p className="text-xs font-medium uppercase tracking-wide text-electric">
-                    Coming Soon - Live module preview for this feature
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {leadOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/70 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-electric/20 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-electric/10 px-5 py-4">
+              <h3 className="font-display text-2xl text-charcoal">Start Your Free Trial</h3>
+              <button type="button" onClick={() => setLeadOpen(false)} className="rounded-lg p-2 hover:bg-surface">
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="p-5">
+              {leadSent ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
+                  <CheckCircle2 className="mx-auto h-6 w-6 text-emerald-600" />
+                  <p className="mt-2 text-sm font-medium text-emerald-800">
+                    Thanks! We&apos;ll email you in the next 5 minutes.
                   </p>
                 </div>
+              ) : (
+                <form onSubmit={submitLead} className="space-y-3">
+                  <input className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="Name" value={leadForm.name} onChange={(e) => setLeadForm((f) => ({ ...f, name: e.target.value }))} required />
+                  <input className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="Email" type="email" value={leadForm.email} onChange={(e) => setLeadForm((f) => ({ ...f, email: e.target.value }))} required />
+                  <input className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="Company" value={leadForm.company} onChange={(e) => setLeadForm((f) => ({ ...f, company: e.target.value }))} required />
+                  <textarea className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="What are you hoping to achieve?" value={leadForm.goal} onChange={(e) => setLeadForm((f) => ({ ...f, goal: e.target.value }))} rows={3} required />
+                  <button type="submit" className="w-full rounded-xl bg-cyan px-4 py-3 text-sm font-semibold text-charcoal">
+                    Get Started Free
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {demoOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/70 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-electric/20 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-electric/10 px-5 py-4">
+              <h3 className="flex items-center gap-2 font-display text-2xl text-charcoal">
+                <CalendarDays className="h-5 w-5 text-cyan" />
+                Book a Demo
+              </h3>
+              <button type="button" onClick={() => setDemoOpen(false)} className="rounded-lg p-2 hover:bg-surface">
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="p-5">
+              {demoSent ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
+                  <CheckCircle2 className="mx-auto h-6 w-6 text-emerald-600" />
+                  <p className="mt-2 text-sm font-medium text-emerald-800">
+                    Perfect — we&apos;ll reach out within 1 hour to schedule your demo.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={submitDemo} className="space-y-3">
+                  <input className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="Name" value={demoForm.name} onChange={(e) => setDemoForm((f) => ({ ...f, name: e.target.value }))} required />
+                  <input className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="Work Email" type="email" value={demoForm.email} onChange={(e) => setDemoForm((f) => ({ ...f, email: e.target.value }))} required />
+                  <input className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="Company" value={demoForm.company} onChange={(e) => setDemoForm((f) => ({ ...f, company: e.target.value }))} required />
+                  <input className="w-full rounded-xl border border-electric/20 px-4 py-3 text-sm" placeholder="Preferred timing (today/tomorrow)" value={demoForm.timing} onChange={(e) => setDemoForm((f) => ({ ...f, timing: e.target.value }))} />
+                  <button type="submit" className="w-full rounded-xl bg-charcoal px-4 py-3 text-sm font-semibold text-white">
+                    Request Demo
+                  </button>
+                </form>
               )}
             </div>
           </div>
