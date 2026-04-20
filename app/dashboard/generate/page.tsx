@@ -23,6 +23,8 @@ export default function GeneratePage() {
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [refineText, setRefineText] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const geoChecks = useMemo(() => {
     const checks = [
@@ -38,32 +40,72 @@ export default function GeneratePage() {
 
   async function generate(mode: "generate" | "refine") {
     setLoading(true);
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode,
-        headline,
-        talkingPoints,
-        primaryKw,
-        secondaryKws,
-        location,
-        targetQuestion,
-        stats,
-        competitorDiff,
-        tone,
-        wordCountTarget,
-        quoteName,
-        quoteTitle,
-        audience,
-        ctaUrl,
-        previousContent: output,
-        refineInstruction: refineText,
-      }),
-    });
-    const data = await res.json();
-    if (res.ok) setOutput(data.content ?? "");
-    setLoading(false);
+    setFeedback(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          headline,
+          talkingPoints,
+          primaryKw,
+          secondaryKws,
+          location,
+          targetQuestion,
+          stats,
+          competitorDiff,
+          tone,
+          wordCountTarget,
+          quoteName,
+          quoteTitle,
+          audience,
+          ctaUrl,
+          previousContent: output,
+          refineInstruction: refineText,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to generate release");
+      setOutput(data.content ?? "");
+      setFeedback(mode === "generate" ? "Draft generated successfully." : "Draft refined successfully.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unexpected error while generating.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveRelease(status: "DRAFT" | "READY") {
+    if (!headline || !output.trim()) {
+      setError("Add a headline and generated content before saving.");
+      return;
+    }
+    setLoading(true);
+    setFeedback(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/releases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          headline,
+          type: "PRESS_RELEASE",
+          content: output,
+          status,
+          geoScore: geoChecks,
+          primaryKw: primaryKw || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to save release.");
+      setFeedback(status === "READY" ? "Saved to queue as Ready." : "Saved as draft.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unexpected error while saving.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -87,6 +129,8 @@ export default function GeneratePage() {
         <div className="flex flex-wrap gap-2">{tones.map((t) => <button type="button" key={t} onClick={() => setTone(t)} className={`rounded-full border px-3 py-1 text-xs ${tone === t ? "border-cyan bg-cyan/20" : "border-electric/20"}`}>{t}</button>)}</div>
         <div className="flex flex-wrap gap-2">{words.map((w) => <button type="button" key={w} onClick={() => setWordCountTarget(w)} className={`rounded-full border px-3 py-1 text-xs ${wordCountTarget === w ? "border-cyan bg-cyan/20" : "border-electric/20"}`}>{w}</button>)}</div>
         <button disabled={loading || !headline} onClick={() => void generate("generate")} className="w-full rounded-lg bg-cyan px-4 py-3 font-semibold text-charcoal disabled:opacity-60">{loading ? "Generating..." : "Generate →"}</button>
+        {feedback ? <p className="text-sm text-emerald-700">{feedback}</p> : null}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
       </div>
       <div className="space-y-4 rounded-xl border border-electric/10 bg-white p-5">
         <h2 className="font-display text-xl">Output</h2>
@@ -96,8 +140,8 @@ export default function GeneratePage() {
         </div>
         <div className="flex flex-wrap gap-2 text-sm">
           <button className="rounded border border-electric/20 px-3 py-1.5" onClick={() => void navigator.clipboard.writeText(output)}>Copy</button>
-          <button className="rounded border border-electric/20 px-3 py-1.5">Save Draft</button>
-          <button className="rounded border border-electric/20 px-3 py-1.5">Save to Queue</button>
+          <button className="rounded border border-electric/20 px-3 py-1.5 disabled:opacity-60" onClick={() => void saveRelease("DRAFT")} disabled={loading}>Save Draft</button>
+          <button className="rounded border border-electric/20 px-3 py-1.5 disabled:opacity-60" onClick={() => void saveRelease("READY")} disabled={loading}>Save to Queue</button>
         </div>
         <input className="w-full rounded border border-electric/20 px-3 py-2 text-sm" placeholder="What would you like to change?" value={refineText} onChange={(e) => setRefineText(e.target.value)} />
         <button onClick={() => void generate("refine")} className="rounded-lg bg-electric px-4 py-2 text-sm font-semibold text-white">Regenerate</button>

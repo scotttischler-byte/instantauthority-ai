@@ -17,6 +17,7 @@ export default function AnalyzePage() {
   const [status, setStatus] = useState(statuses[0]);
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [competitor, setCompetitor] = useState<AnalysisReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function run(target: string) {
     const res = await fetch("/api/analyze", {
@@ -31,6 +32,7 @@ export default function AnalyzePage() {
 
   async function analyze() {
     setLoading(true);
+    setError(null);
     setStatus(statuses[0]);
     const timer = setInterval(() => {
       setStatus((s) => statuses[(statuses.indexOf(s) + 1) % statuses.length]);
@@ -39,6 +41,8 @@ export default function AnalyzePage() {
       const mine = await run(url);
       setReport(mine);
       if (competitorUrl) setCompetitor(await run(competitorUrl));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to analyze website.");
     } finally {
       clearInterval(timer);
       setLoading(false);
@@ -56,6 +60,7 @@ export default function AnalyzePage() {
           Analyze Now →
         </button>
         {loading ? <p className="mt-3 text-sm text-slate-600">{status}</p> : null}
+        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
       </div>
       {report ? (
         <>
