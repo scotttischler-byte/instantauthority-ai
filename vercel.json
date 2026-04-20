@@ -1,4 +1,5 @@
 {
-  "buildCommand": "prisma generate && next build",
-  "framework": "nextjs"
+  "functions": {
+    "app/api/**/*": { "maxDuration": 30 }
+  }
 }
