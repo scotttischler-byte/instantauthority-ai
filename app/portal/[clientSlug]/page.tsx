@@ -7,6 +7,7 @@ type Props = {
 };
 
 export default async function ClientPortalPage({ params, searchParams }: Props) {
+  if (!process.env.DATABASE_URL) notFound();
   const { clientSlug } = await params;
   const { token } = await searchParams;
   const client = await prisma.client.findFirst({ where: { portalSlug: clientSlug } });

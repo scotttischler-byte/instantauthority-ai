@@ -24,7 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
-  const hasUsableClerk = /^pk_(test|live)_/.test(clerkKey) && !clerkKey.includes("your_clerk");
+  const clerkSecret = process.env.CLERK_SECRET_KEY || "";
+  const hasUsableClerk =
+    /^pk_(test|live)_/.test(clerkKey) &&
+    /^sk_(test|live)_/.test(clerkSecret) &&
+    !clerkKey.includes("your_clerk") &&
+    !clerkSecret.includes("your_clerk");
   return (
     <html lang="en" className={`${dmSans.variable} ${spaceGrotesk.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
