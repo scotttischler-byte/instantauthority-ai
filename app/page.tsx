@@ -19,6 +19,52 @@ type AnalysisResult = {
   topIssues: string[];
 };
 
+const featureDescriptions: Record<
+  Exclude<FeatureKey, "Website Analyzer">,
+  { subtitle: string; bullets: string[] }
+> = {
+  "Authority Engine": {
+    subtitle: "Generate SEO + GEO press releases designed for authority growth.",
+    bullets: [
+      "AI-powered draft generation with structured facts and quotes",
+      "Keyword-aware narrative for traditional and AI search",
+      "Fast publish-ready output for agency teams",
+    ],
+  },
+  "GEO Optimizer": {
+    subtitle: "Tune content for citation visibility in ChatGPT, Perplexity, and AI Overviews.",
+    bullets: [
+      "Entity clarity checks and citation-friendly phrasing",
+      "Fact-density recommendations for trust signals",
+      "Question-targeting workflows for answer-engine coverage",
+    ],
+  },
+  "White Label Reports": {
+    subtitle: "Create premium branded client reports in minutes.",
+    bullets: [
+      "Custom agency branding and executive summaries",
+      "Clear scorecards for SEO, GEO, and Authority",
+      "Download-ready report flow for client updates",
+    ],
+  },
+  "Client Portal": {
+    subtitle: "Give clients a private, polished authority dashboard experience.",
+    bullets: [
+      "Shareable tokenized links for each client account",
+      "Live visibility into releases, scores, and momentum",
+      "Clean presentation layer designed for retention",
+    ],
+  },
+  "Authority Calendar": {
+    subtitle: "Plan and schedule releases across your full client roster.",
+    bullets: [
+      "Monthly planning with drag-and-drop schedule management",
+      "Status tracking from Draft to Submitted",
+      "Weekly workload snapshots for team execution",
+    ],
+  },
+};
+
 export default function Home() {
   const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(null);
   const [analyzerUrl, setAnalyzerUrl] = useState("");
@@ -279,10 +325,25 @@ export default function Home() {
                   ) : null}
                 </div>
               ) : (
-                <div className="rounded-xl border border-electric/10 bg-surface p-4">
+                <div className="space-y-4 rounded-xl border border-electric/10 bg-surface p-4">
                   <p className="text-sm text-slate-700">
-                    {activeFeature} demo module is ready. This modal is a polished placeholder so your demo flow
-                    feels complete and interactive.
+                    {
+                      featureDescriptions[activeFeature as Exclude<FeatureKey, "Website Analyzer">]
+                        ?.subtitle
+                    }
+                  </p>
+                  <ul className="space-y-2 text-sm text-slate-700">
+                    {(
+                      featureDescriptions[activeFeature as Exclude<FeatureKey, "Website Analyzer">]
+                        ?.bullets ?? []
+                    ).map((item) => (
+                      <li key={item} className="rounded-lg bg-white px-3 py-2">
+                        • {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs font-medium uppercase tracking-wide text-electric">
+                    Coming Soon - Live module preview for this feature
                   </p>
                 </div>
               )}
