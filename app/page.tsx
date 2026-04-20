@@ -1,7 +1,53 @@
+ "use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { BarChart3, FileText, Globe2, Search, ShieldCheck, Zap } from "lucide-react";
+import { BarChart3, FileText, Globe2, Search, ShieldCheck, X, Zap } from "lucide-react";
+
+type FeatureKey =
+  | "Authority Engine"
+  | "Website Analyzer"
+  | "GEO Optimizer"
+  | "White Label Reports"
+  | "Client Portal"
+  | "Authority Calendar";
+
+type AnalysisResult = {
+  seo: number;
+  geo: number;
+  authority: number;
+  topIssues: string[];
+};
 
 export default function Home() {
+  const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(null);
+  const [analyzerUrl, setAnalyzerUrl] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+
+  async function runFakeAnalysis() {
+    if (!analyzerUrl.trim()) return;
+    setAnalyzing(true);
+    setAnalysis(null);
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    const hostSeed = analyzerUrl.length;
+    const seo = Math.min(96, 72 + (hostSeed % 18));
+    const geo = Math.min(95, 65 + (hostSeed % 24));
+    const authority = Math.round((seo + geo) / 2);
+    setAnalysis({
+      seo,
+      geo,
+      authority,
+      topIssues: [
+        "Add an FAQ section with citation-ready answers.",
+        "Increase factual statements with concrete numbers.",
+        "Strengthen internal links to service/location pages.",
+        "Add Organization + LocalBusiness structured data.",
+      ],
+    });
+    setAnalyzing(false);
+  }
+
   return (
     <div className="bg-surface text-charcoal">
       <header className="sticky top-0 z-40 border-b border-charcoal/10 bg-white/95 backdrop-blur">
@@ -90,11 +136,16 @@ export default function Home() {
               { label: "Client Portal", icon: ShieldCheck },
               { label: "Authority Calendar", icon: BarChart3 },
             ].map(({ label, icon: Icon }) => (
-              <div key={label} className="rounded-xl border border-charcoal/10 bg-white p-5 shadow-sm">
+              <button
+                key={label}
+                type="button"
+                onClick={() => setActiveFeature(label as FeatureKey)}
+                className="rounded-xl border border-charcoal/10 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-cyan/40 hover:shadow-md"
+              >
                 <Icon className="h-6 w-6 text-cyan" />
                 <h3 className="mt-3 font-display text-xl">{label}</h3>
                 <p className="mt-2 text-sm text-slate-600">Data-forward authority workflows for agencies and B2B teams.</p>
-              </div>
+              </button>
             ))}
           </div>
         </section>
@@ -156,6 +207,89 @@ export default function Home() {
           <span className="rounded-full bg-cyan/20 px-2 py-1 text-xs font-semibold text-electric">Powered by Claude AI</span>
         </div>
       </footer>
+
+      {activeFeature ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/70 p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-electric/20 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-electric/10 px-5 py-4">
+              <h3 className="font-display text-2xl text-charcoal">{activeFeature}</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveFeature(null);
+                  setAnalyzerUrl("");
+                  setAnalysis(null);
+                  setAnalyzing(false);
+                }}
+                className="rounded-lg p-2 text-slate-500 transition hover:bg-surface hover:text-charcoal"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {activeFeature === "Website Analyzer" ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-600">
+                    Enter a website URL to run an instant authority analysis demo.
+                  </p>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <input
+                      className="flex-1 rounded-xl border border-electric/20 px-4 py-3 text-sm"
+                      placeholder="https://example.com"
+                      value={analyzerUrl}
+                      onChange={(e) => setAnalyzerUrl(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void runFakeAnalysis()}
+                      disabled={analyzing || !analyzerUrl.trim()}
+                      className="rounded-xl bg-cyan px-5 py-3 text-sm font-semibold text-charcoal disabled:opacity-60"
+                    >
+                      {analyzing ? "Analyzing..." : "Analyze"}
+                    </button>
+                  </div>
+
+                  {analysis ? (
+                    <div className="space-y-4 rounded-xl border border-electric/10 bg-surface p-4">
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-lg bg-white p-3 text-center">
+                          <p className="text-xs text-slate-500">SEO Score</p>
+                          <p className="font-display text-3xl text-electric">{analysis.seo}</p>
+                        </div>
+                        <div className="rounded-lg bg-white p-3 text-center">
+                          <p className="text-xs text-slate-500">GEO Score</p>
+                          <p className="font-display text-3xl text-cyan">{analysis.geo}</p>
+                        </div>
+                        <div className="rounded-lg bg-charcoal p-3 text-center text-white">
+                          <p className="text-xs text-white/70">Authority</p>
+                          <p className="font-display text-3xl text-cyan">{analysis.authority}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-2 text-sm font-semibold text-charcoal">Top issues to fix</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          {analysis.topIssues.map((issue) => (
+                            <li key={issue}>• {issue}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-electric/10 bg-surface p-4">
+                  <p className="text-sm text-slate-700">
+                    {activeFeature} demo module is ready. This modal is a polished placeholder so your demo flow
+                    feels complete and interactive.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
