@@ -1,0 +1,87 @@
+generator client {
+provider = "prisma-client-js"
+}
+
+datasource db {
+provider = "sqlite"
+url = env("DATABASE_URL")
+}
+
+model User {
+id String @id @default(cuid())
+clerkId String @unique
+email String
+agencyName String?
+agencyLogo String?
+agencyColor String?
+agencyWebsite String?
+reportFooter String?
+defaultWC Int @default(700)
+defaultTone String @default("Professional")
+boilerplate String?
+mediaContact String?
+createdAt DateTime @default(now())
+clients Client[]
+releases PressRelease[]
+analyses WebsiteAnalysis[]
+}
+
+model Client {
+id String @id @default(cuid())
+userId String
+user User @relation(fields: [userId], references: [id])
+name String
+industry String
+website String?
+spokesperson String?
+title String?
+boilerplate String?
+tone String @default("Professional")
+notes String?
+portalSlug String? @unique
+portalToken String?
+color String?
+createdAt DateTime @default(now())
+releases PressRelease[]
+analyses WebsiteAnalysis[]
+}
+
+model PressRelease {
+id String @id @default(cuid())
+userId String
+user User @relation(fields: [userId], references: [id])
+clientId String?
+client Client? @relation(fields: [clientId], references: [id])
+headline String
+type String
+content String
+wordCount Int
+status String @default("DRAFT")
+geoScore Int?
+primaryKw String?
+scheduledDate DateTime?
+createdAt DateTime @default(now())
+distributions Distribution[]
+}
+
+model WebsiteAnalysis {
+id String @id @default(cuid())
+userId String
+user User @relation(fields: [userId], references: [id])
+clientId String?
+client Client? @relation(fields: [clientId], references: [id])
+url String
+seoScore Int
+geoScore Int
+totalScore Int
+reportData String
+createdAt DateTime @default(now())
+}
+
+model Distribution {
+id String @id @default(cuid())
+releaseId String
+release PressRelease @relation(fields: [releaseId], references: [id])
+sites String
+submittedAt DateTime @default(now())
+}
