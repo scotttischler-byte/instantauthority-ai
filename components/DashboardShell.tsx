@@ -33,6 +33,8 @@ const nav = [
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const title = nav.find((n) => pathname === n.href)?.label ?? "Overview";
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
+  const hasUsableClerk = /^pk_(test|live)_/.test(clerkKey) && !clerkKey.includes("your_clerk");
 
   return (
     <div className="min-h-screen bg-surface lg:flex">
@@ -68,7 +70,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <Link href="/dashboard/generate" className="rounded-lg bg-cyan px-4 py-2 text-sm font-semibold text-charcoal">
               Generate Release
             </Link>
-            <UserButton />
+            {hasUsableClerk ? <UserButton /> : <span className="rounded-full border border-electric/20 px-3 py-1 text-xs text-slate-500">Account</span>}
           </div>
         </header>
         <main className="p-4 sm:p-6">{children}</main>
