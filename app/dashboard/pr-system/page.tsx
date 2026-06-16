@@ -148,9 +148,10 @@ export default function PrSystemPage() {
 
   function addCustomLink() {
     if (!customName.trim()) return;
+    const baseId = customName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "custom";
     persistLinks([
       {
-        id: Math.random().toString(36).slice(2, 10),
+        id: `${baseId}-${trackedLinks.length + 1}`,
         name: customName.trim(),
         type: customType,
         url: customUrl.trim(),
@@ -165,9 +166,10 @@ export default function PrSystemPage() {
   }
 
   function addPlanTarget(target: PrPlan["linkTargets"][number]) {
+    const baseId = target.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "target";
     persistLinks([
       {
-        id: Math.random().toString(36).slice(2, 10),
+        id: `${baseId}-${trackedLinks.length + 1}`,
         name: target.name,
         type: target.type,
         url: target.url,
