@@ -10,6 +10,7 @@ import {
   Globe,
   LayoutDashboard,
   ListChecks,
+  Megaphone,
   Search,
   Settings,
   Users,
@@ -20,6 +21,7 @@ import { UserButton } from "@clerk/nextjs";
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/autopilot", label: "AI Autopilot", icon: Bot },
+  { href: "/dashboard/pr-system", label: "PR Command Center", icon: Megaphone },
   { href: "/dashboard/generate", label: "Authority Engine", icon: Zap },
   { href: "/dashboard/analyze", label: "Analyzer", icon: Search },
   { href: "/dashboard/calendar", label: "Calendar", icon: Calendar },
