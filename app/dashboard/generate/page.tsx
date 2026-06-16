@@ -4,6 +4,31 @@ import { useMemo, useState } from "react";
 
 const tones = ["Professional", "Authoritative", "Exciting", "Concise", "Technical"];
 const words = [400, 700, 1000, 1500];
+const defaultAutopilotChannels = ["PRwire", "LinkedIn", "Instagram", "Email pitch"];
+
+type AutopilotReview = {
+  aiAvailable: boolean;
+  warning?: string;
+  overallScore: number;
+  readiness: "needs_work" | "ready_for_human" | "approved_with_minor_edits";
+  riskLevel: "low" | "medium" | "high";
+  humanReviewRequired: boolean;
+  executiveSummary: string;
+  mustFix: string[];
+  coachingNotes: string[];
+  factCheckQuestions: string[];
+  complianceRisks: string[];
+  franchiseeInstructions: string[];
+  clientApprovalChecklist: string[];
+  channelAssets: {
+    pressWire: string;
+    linkedIn: string;
+    instagram: string;
+    emailPitch: string;
+  };
+  revisedRelease: string;
+  nextBestActions: string[];
+};
 
 export default function GeneratePage() {
   const [headline, setHeadline] = useState("");
@@ -22,6 +47,8 @@ export default function GeneratePage() {
   const [ctaUrl, setCtaUrl] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [autopilotLoading, setAutopilotLoading] = useState(false);
+  const [autopilotReview, setAutopilotReview] = useState<AutopilotReview | null>(null);
   const [refineText, setRefineText] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +96,7 @@ export default function GeneratePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Unable to generate release");
       setOutput(data.content ?? "");
+      setAutopilotReview(null);
       setFeedback(mode === "generate" ? "Draft generated successfully." : "Draft refined successfully.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error while generating.");
@@ -108,6 +136,38 @@ export default function GeneratePage() {
     }
   }
 
+  async function runAutopilotReview() {
+    if (!headline || !output.trim()) {
+      setError("Generate a draft before running AI Autopilot review.");
+      return;
+    }
+    setAutopilotLoading(true);
+    setFeedback(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/autopilot/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          headline,
+          content: output,
+          clientName: quoteName || undefined,
+          audience,
+          channels: defaultAutopilotChannels,
+          reviewerMode: "release",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to run AI Autopilot review.");
+      setAutopilotReview(data.review);
+      setFeedback("AI Autopilot double-check complete. Human approval is still required before publishing.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unexpected error while reviewing.");
+    } finally {
+      setAutopilotLoading(false);
+    }
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-2">
       <div className="space-y-4 rounded-xl border border-electric/10 bg-white p-5">
@@ -142,10 +202,70 @@ export default function GeneratePage() {
           <button className="rounded border border-electric/20 px-3 py-1.5" onClick={() => void navigator.clipboard.writeText(output)}>Copy</button>
           <button className="rounded border border-electric/20 px-3 py-1.5 disabled:opacity-60" onClick={() => void saveRelease("DRAFT")} disabled={loading}>Save Draft</button>
           <button className="rounded border border-electric/20 px-3 py-1.5 disabled:opacity-60" onClick={() => void saveRelease("READY")} disabled={loading}>Save to Queue</button>
+          <button className="rounded bg-charcoal px-3 py-1.5 text-white disabled:opacity-60" onClick={() => void runAutopilotReview()} disabled={loading || autopilotLoading || !output.trim()}>
+            {autopilotLoading ? "Double-checking..." : "AI Double Check"}
+          </button>
         </div>
+        {autopilotReview ? (
+          <div className="space-y-4 rounded-xl border border-cyan/30 bg-cyan/5 p-4 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="font-display text-lg text-charcoal">AI Autopilot Review</p>
+                <p className="text-slate-600">{autopilotReview.executiveSummary}</p>
+              </div>
+              <div className="rounded-lg bg-white px-3 py-2 text-center shadow-sm">
+                <p className="text-xs text-slate-500">Readiness</p>
+                <p className="font-display text-2xl text-cyan">{autopilotReview.overallScore}</p>
+              </div>
+            </div>
+            {autopilotReview.warning ? <p className="rounded bg-amber-50 p-2 text-amber-700">{autopilotReview.warning}</p> : null}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg bg-white p-3"><span className="text-slate-500">Status:</span> {autopilotReview.readiness.replaceAll("_", " ")}</div>
+              <div className="rounded-lg bg-white p-3"><span className="text-slate-500">Risk:</span> {autopilotReview.riskLevel}</div>
+              <div className="rounded-lg bg-white p-3"><span className="text-slate-500">Human gate:</span> {autopilotReview.humanReviewRequired ? "Required" : "Optional"}</div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Checklist title="Must fix before approval" items={autopilotReview.mustFix} />
+              <Checklist title="Fact-check questions" items={autopilotReview.factCheckQuestions} />
+              <Checklist title="Franchisee coaching" items={autopilotReview.franchiseeInstructions} />
+              <Checklist title="Client approval checklist" items={autopilotReview.clientApprovalChecklist} />
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <p className="font-semibold">Channel assets</p>
+              <div className="mt-2 grid gap-2 md:grid-cols-2">
+                {[
+                  ["LinkedIn", autopilotReview.channelAssets.linkedIn],
+                  ["Instagram caption", autopilotReview.channelAssets.instagram],
+                  ["Email pitch", autopilotReview.channelAssets.emailPitch],
+                  ["PRwire copy", autopilotReview.channelAssets.pressWire],
+                ].map(([label, value]) => (
+                  <button key={label} className="rounded border border-electric/10 p-2 text-left hover:bg-surface" onClick={() => void navigator.clipboard.writeText(value)}>
+                    <span className="font-semibold">{label}</span>
+                    <span className="mt-1 line-clamp-3 block text-xs text-slate-500">{value}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button className="rounded border border-electric/20 px-3 py-1.5" onClick={() => setOutput(autopilotReview.revisedRelease)}>Apply safer revision</button>
+              <button className="rounded border border-electric/20 px-3 py-1.5" onClick={() => void navigator.clipboard.writeText(autopilotReview.clientApprovalChecklist.join("\n"))}>Copy approval checklist</button>
+            </div>
+          </div>
+        ) : null}
         <input className="w-full rounded border border-electric/20 px-3 py-2 text-sm" placeholder="What would you like to change?" value={refineText} onChange={(e) => setRefineText(e.target.value)} />
         <button onClick={() => void generate("refine")} className="rounded-lg bg-electric px-4 py-2 text-sm font-semibold text-white">Regenerate</button>
       </div>
+    </div>
+  );
+}
+
+function Checklist({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-lg bg-white p-3">
+      <p className="font-semibold">{title}</p>
+      <ul className="mt-2 space-y-1 text-slate-600">
+        {items.length ? items.map((item) => <li key={item}>• {item}</li>) : <li>Nothing flagged.</li>}
+      </ul>
     </div>
   );
 }

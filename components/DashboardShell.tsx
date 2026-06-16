@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell,
+  Bot,
   Calendar,
   FileText,
   Globe,
@@ -18,6 +19,7 @@ import { UserButton } from "@clerk/nextjs";
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/autopilot", label: "AI Autopilot", icon: Bot },
   { href: "/dashboard/generate", label: "Authority Engine", icon: Zap },
   { href: "/dashboard/analyze", label: "Analyzer", icon: Search },
   { href: "/dashboard/calendar", label: "Calendar", icon: Calendar },

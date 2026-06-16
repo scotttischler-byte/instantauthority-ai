@@ -67,6 +67,7 @@ export default async function DashboardPage() {
         <div className="rounded-xl border border-electric/10 bg-white p-5">
           <h2 className="font-display text-xl">Quick actions</h2>
           <div className="mt-3 flex flex-wrap gap-2">
+            <Link className="rounded-lg bg-charcoal px-3 py-2 text-sm font-semibold text-white" href="/dashboard/autopilot">Launch AI Autopilot</Link>
             <Link className="rounded-lg bg-cyan px-3 py-2 text-sm font-semibold text-charcoal" href="/dashboard/generate">Generate Release</Link>
             <Link className="rounded-lg border border-charcoal/20 px-3 py-2 text-sm" href="/dashboard/analyze">Analyze Website</Link>
             <Link className="rounded-lg border border-charcoal/20 px-3 py-2 text-sm" href="/dashboard/clients">Add Client</Link>
