@@ -3,7 +3,28 @@ import { NextResponse } from "next/server";
 import { getOrCreateDbUser } from "@/lib/auth-user";
 import { parseReport } from "@/lib/analysis";
 
-const system = `You are an expert SEO and GEO analyst. Return strict JSON with category scores (0-20 each), sections (found/missing/recommendations), quickWins, strategicWins, executiveSummary, aiVisibilityAssessment.`;
+const system = `You are an expert SEO and GEO (Generative Engine Optimization) analyst.
+Analyze the provided website and respond with ONLY a single strict JSON object (no markdown, no prose) matching exactly this schema:
+{
+  "scores": {
+    "onPage": <0-20>, "content": <0-20>, "technical": <0-20>, "authority": <0-20>, "geo": <0-20>,
+    "seoTotal": <0-100, sum of the four SEO categories scaled to 100>,
+    "geoTotal": <0-20, the geo category score>,
+    "total": <0-100, overall authority score>
+  },
+  "sections": {
+    "onPage":    { "found": [string], "missing": [string], "recommendations": [{ "text": string, "priority": "High"|"Medium"|"Low" }] },
+    "content":   { "found": [string], "missing": [string], "recommendations": [{ "text": string, "priority": "High"|"Medium"|"Low" }] },
+    "technical": { "found": [string], "missing": [string], "recommendations": [{ "text": string, "priority": "High"|"Medium"|"Low" }] },
+    "authority": { "found": [string], "missing": [string], "recommendations": [{ "text": string, "priority": "High"|"Medium"|"Low" }] },
+    "geo":       { "found": [string], "missing": [string], "recommendations": [{ "text": string, "priority": "High"|"Medium"|"Low" }] }
+  },
+  "quickWins": [string],
+  "strategicWins": [string],
+  "executiveSummary": string,
+  "aiVisibilityAssessment": string
+}
+All numeric fields are required. Do not wrap the JSON in code fences.`;
 
 export async function POST(req: Request) {
   const user = await getOrCreateDbUser();
@@ -27,7 +48,7 @@ export async function POST(req: Request) {
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const resp = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 4000,
     system,
     messages: [{ role: "user", content: `Analyze URL ${url}\nHTML:\n${html.slice(0, 120000)}` }],
